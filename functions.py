@@ -4,30 +4,34 @@ from datetime import timedelta
 import cards
 from random import shuffle
 
+
 def actioner(g, line, username, channel, gamechannel):
 
     lower = line.lower()
 
     messages = []
 
-    if g.inprogress:          
+    if g.inprogress:
         if lower == "start":
-            messages.append({"message": "Could not start because game is already in progress", "channel": gamechannel})
+            messages.append({
+                "message": "Could not start because game is already in progress",
+                "channel": gamechannel})
     else:
         if lower == "start":
             if len(g.players) >= g.minplayers:
-                starttime = datetime.now()
                 timetostart = 2
-                g.starttime = datetime.now() + timedelta(seconds = timetostart)
-                messages.append({"message": "Starting game in %s seconds" % timetostart, "channel": gamechannel})
+                g.starttime = datetime.now() + timedelta(seconds=timetostart)
+                messages.append({
+                    "message": "Starting game in %s seconds" % timetostart,
+                    "channel": gamechannel})
             else:
-                messages.append({"message": "Could not start because there aren't enough players", "channel": gamechannel})
-
+                messages.append({
+                    "message": "Could not start because there aren't enough players",
+                    "channel": gamechannel})
 
     if lower == "stop":
         stopmessage = g.stop()
         messages.append({"message": stopmessage, "channel": gamechannel})
-
 
     elif lower == "gamestatus":
         messages.append({"message": g.inprogress, "channel": gamechannel})
@@ -38,22 +42,31 @@ def actioner(g, line, username, channel, gamechannel):
             for player in g.players:
                 playernames.append(player.username)
             playerstring = " ".join(playernames)
-            messages.append({"message": "Players: %s" % playerstring, "channel": gamechannel})
+            messages.append({
+                "message": "Players: %s" % playerstring,
+                "channel": gamechannel})
         else:
-            messages.append({"message": "No players have joined the game", "channel": gamechannel})
+            messages.append({
+                "message": "No players have joined the game",
+                "channel": gamechannel})
 
     elif lower == "join":
-        newplayer = g.getPlayerByName(username)
+        # newplayer = g.getPlayerByName(username)
+        g.getPlayerByName(username)  # dunno if this is useful
         block = 0
         for player in g.players:
             if username == player.username:
                 block = 1
         if block == 1:
-            messages.append({"message": "Error, cannot join game, you're already in it", "channel": gamechannel})
+            messages.append({
+                "message": "Error, cannot join game, you're already in it",
+                "channel": gamechannel})
         else:
             newPlayer = Player(username)
             g.players.append(newPlayer)
-            messages.append({"message": "%s joined the game" %username, "channel": gamechannel})
+            messages.append({
+                "message": "%s joined the game" % username,
+                "channel": gamechannel})
             g.dealCards()
             if g.inprogress:
                 messages += [{"message": g.blackcard, "channel": username}]
@@ -66,48 +79,59 @@ def actioner(g, line, username, channel, gamechannel):
 
     elif lower == "czar":
         if g.inprogress:
-            messages.append({"message": "The Card Czar is %s" %g.czar.username, "channel": gamechannel})
+            messages.append({
+                "message": "The Card Czar is %s" % g.czar.username,
+                "channel": gamechannel})
         else:
-            messages.append({"message": "There is no Card Czar yet", "channel": gamechannel})
+            messages.append({
+                "message": "There is no Card Czar yet",
+                "channel": gamechannel})
+
     elif lower[:5] == "kill ":
-        messages.append({"message": "DIE %s DIE!" % line[5:].upper(), "channel": gamechannel})
+        messages.append({
+            "message": "DIE %s DIE!" % line[5:].upper(),
+            "channel": gamechannel})
 
     elif lower == "cards":
         player = g.getPlayerByName(username)
         messages += player.printCards()
 
     elif lower == "countcards":
-        messages.append({"message": "There are %s cards remaining" % len(g.wcards), "channel": gamechannel})
+        messages.append({
+            "message": "There are %s cards remaining" % len(g.wcards),
+            "channel": gamechannel})
 
     elif lower == "$playedcards":
         messages.append({"message": g.playedCards, "channel": channel})
 
     elif lower == "scores":
-        messages.append({"message": "The scores are as follows:", "channel": channel})
+        messages.append({
+            "message": "The scores are as follows:", "channel": channel})
         for player in g.players:
-            messages.append({"message": "%s: %s" %(player.username, player.score), "channel": channel})
+            messages.append({
+                "message": "%s: %s" % (player.username, player.score),
+                "channel": channel})
 
     elif lower == "test":
-        messages.append({"message": "testing functions", "channel": gamechannel})
+        messages.append({
+            "message": "testing functions", "channel": gamechannel})
     elif lower == "wcards":
         print g.wcards
     elif lower == "bcards":
         print g.bcards
     elif lower == "bcards2":
         print g.bcards2
-
-
     return messages
 
+
 def gameLogic(g, line, username, channel, gamechannel):
-    if line:
-        lower = line.lower()
+    # if line:
+    #     lower = line.lower()
     messages = []
 
     if len(g.players) < g.minplayers:
         if g.starttime or g.inprogress:
             g.stop()
-
 
     if g.starttime:
         currtime = datetime.now()
@@ -115,49 +139,66 @@ def gameLogic(g, line, username, channel, gamechannel):
             g.starttime = None
             g.inprogress = True
             shuffle(g.players)
-            messages.append({"message": "Starting game now!", "channel": gamechannel})
+            messages.append({
+                "message": "Starting game now!", "channel": gamechannel})
 
     elif g.newround > g.round:
         if not g.czar:
             g.czar = g.players[0]
         g.round = g.newround
         if len(g.allbcards) > 0:
-            messages.append({"message": "Starting round %s. The Card Czar is %s" %(g.newround, g.czar.username), "channel": gamechannel})
+            messages.append({
+                "message": "Starting round %s. The Card Czar is %s" % (g.newround, g.czar.username),
+                "channel": gamechannel})
             g.dealCards()
             blackcard = g.allbcards.pop(0)
             g.blackcard = blackcard["card"]
             g.blacktype = blackcard["type"]
             for player in g.players:
                 if not g.czar == player:
-                    messages += [{"message": g.blackcard, "channel": player.username}]
+                    messages += [{
+                        "message": g.blackcard, "channel": player.username}]
                     if g.blacktype == 2:
-                        messages.append({"message": "Please select your cards by typing in the format x y", "channel": player.username})
+                        messages.append({
+                            "message": "Please select your cards by typing in the format x y",
+                            "channel": player.username})
                     messages += player.printCards()
             #g.setTopic()
             messages.append({"message": g.blackcard, "channel": gamechannel})
             g.waitPlayers = 1
         else:
-            messages.append({"message": "The game is over! The final scores are as follows:", "channel": channel})
+            messages.append({
+                "message": "The game is over! The final scores are as follows:",
+                "channel": channel})
             for player in g.players:
-                messages.append({"message": "%s: %s" %(player.username, player.score), "channel": channel})
+                messages.append({
+                    "message": "%s: %s" % (player.username, player.score),
+                    "channel": channel})
             g.stop()
 
     elif g.waitPlayers > 0:
         #print g.playedCards
         if g.waitPlayers == 1:
-            messages.append({"message": "The Players must each pick a card, by messaging the number to humanitybot", "channel": gamechannel})
+            messages.append({
+                "message": "The Players must each pick a card, by messaging the number to humanitybot",
+                "channel": gamechannel})
             if g.blacktype == 2:
-                messages.append({"message": "Please select your cards by typing in the format x y", "channel": gamechannel})
+                messages.append({
+                    "message": "Please select your cards by typing in the format x y",
+                    "channel": gamechannel})
             g.waitPlayers = 2
         if len(g.playedCards) == len(g.players) - 1:
             g.waitPlayers = 0
             g.waitCzar = 1
         elif line:
             if g.blacktype == 1:
-                if re.search("^([0-9]|10)$", line) and not username == g.czar.username:
+                if re.search("^([0-9]|10)$", line) \
+                        and not username == g.czar.username:
                     player = g.getPlayerByName(username)
                     if player in g.playedPlayers:
-                        messages += [{"message": "You cannot play more than one card", "channel": username}]
+                        messages += [{
+                            "message": "You cannot play more than one card",
+                            "channel": username}]
                     else:
                         g.playedPlayers.append(player)
                         id = int(line)
@@ -166,13 +207,19 @@ def gameLogic(g, line, username, channel, gamechannel):
                         id -= 1
                         if id < 10 and id >= 0:
                             card = player.hand.pop(id)
-                            messages += [{"message": "Thank you for playing %s" %(card), "channel": player.username}]
-                            g.playedCards.append({"card": card, "owner": player})
+                            messages += [{
+                                "message": "Thank you for playing %s" % (card),
+                                "channel": player.username}]
+                            g.playedCards.append({
+                                "card": card, "owner": player})
             elif g.blacktype == 2:
-                if re.search("^([0-9]|10) ([0-9]|10)+$", line) and not username == g.czar.username:
+                if re.search("^([0-9]|10) ([0-9]|10)+$", line) \
+                        and not username == g.czar.username:
                     player = g.getPlayerByName(username)
                     if player in g.playedPlayers:
-                        messages += [{"message": "You cannot play more than one card", "channel": username}]
+                        messages += [{
+                            "message": "You cannot play more than one card",
+                            "channel": username}]
                     else:
                         g.playedPlayers.append(player)
                         ids = line.split()
@@ -184,24 +231,32 @@ def gameLogic(g, line, username, channel, gamechannel):
                         if id2 == 0:
                             id2 = 10
                         id2 -= 1
-                        if id1 < 10 and id1 >= 0 and id2 < 10 and id2 >=0:
+                        if id1 < 10 and id1 >= 0 and id2 < 10 and id2 >= 0:
                             card1 = player.hand[id1]
                             card2 = player.hand[id2]
-                            messages += [{"message": "Thank you for playing %s / %s" %(card1, card2), "channel": player.username}]
-                            g.playedCards.append({"card": "%s / %s" %(card1, card2), "owner": player})
+                            messages += [{
+                                "message": "Thank you for playing %s / %s" % (card1, card2),
+                                "channel": player.username}]
+                            g.playedCards.append({
+                                "card": "%s / %s" % (card1, card2),
+                                "owner": player})
                             player.hand.remove(card1)
                             player.hand.remove(card2)
     elif g.waitCzar > 0:
         if g.waitCzar == 1:
             shuffle(g.playedCards)
-            messages.append({"message": "The Czar, %s, must pick a card" % g.czar.username, "channel": gamechannel})
+            messages.append({
+                "message": "The Czar, %s, must pick a card" % g.czar.username,
+                "channel": gamechannel})
             messages.append({"message": g.blackcard, "channel": gamechannel})
             i = 1
             spacer = "  "
             for card in g.playedCards:
                 if i > 9:
                     spacer = " "
-                messages.append({"message": "%s)%s%s" %(i, spacer, card["card"]),"channel": gamechannel})
+                messages.append({
+                    "message": "%s)%s%s" % (i, spacer, card["card"]),
+                    "channel": gamechannel})
                 i += 1
             g.waitCzar = 2
         elif line and g.waitCzar == 2:
@@ -210,7 +265,9 @@ def gameLogic(g, line, username, channel, gamechannel):
                 if cardID < len(g.playedCards) and cardID >= 0:
                     cardText = g.playedCards[cardID]["card"]
                     cardOwner = g.playedCards[cardID]["owner"]
-                    messages.append({"message": "The Czar picked card %s: %s %s has won the round!" %(cardID + 1, cardText, cardOwner.username), "channel": gamechannel})
+                    messages.append({
+                        "message": "The Czar picked card %s: %s %s has won the round!" % (cardID + 1, cardText, cardOwner.username),
+                        "channel": gamechannel})
                     cardOwner.score += 1
                     g.waitCzar = 0
                     g.newround += 1
@@ -221,16 +278,17 @@ def gameLogic(g, line, username, channel, gamechannel):
                         if player == g.czar:
                             czarid = i
                         i += 1
-                    czarid +=1
-                    if czarid > len(g.players) -1:
+                    czarid += 1
+                    if czarid > len(g.players) - 1:
                         czarid = 0
                     g.czar = g.players[czarid]
                     g.playedPlayers = []
 
     return messages
 
+
 class Player():
-    def __init__ (self, username):
+    def __init__(self, username):
         self.username = username
         self.hand = []
         self.score = 0
@@ -238,13 +296,12 @@ class Player():
     def printCards(self):
         messages = [{"message": "Your cards are:", "channel": self.username}]
         i = 1
-        cards = ""
+        _cards = ""
         for card in self.hand:
-            cards += "%s) %s " % (i,card)
+            _cards += "%s) %s " % (i, card)
             i += 1
-        messages.append({"message": cards, "channel": self.username})
+        messages.append({"message": _cards, "channel": self.username})
         return messages
-
 
 
 class Game():
@@ -288,11 +345,11 @@ class Game():
     #    self.waitPlayers = 0
     #    self.playedCards = []
     #    self.newround = 1
-    #    
+    #
     #    shuffle(self.wcards)
         #self.threadDetails.s.send("TOPIC %s :Welcome to Chat Against Humanity. Visit http://www.chatagainsthumanity.com for a list of commands.\n" %(self.threadDetails.channel))
-        
         return "Stopping game"
+
     def dealCards(self):
         for player in self.players:
             toDeal = 10 - len(player.hand)
@@ -320,9 +377,9 @@ class Game():
             if player.username == playername:
                 cont = True
         if cont:
-            message = "%s left the game." %playername
-            if len(self.players) -1 < self.minplayers and self.inprogress:
-                stop = self.stop()
+            message = "%s left the game." % playername
+            if len(self.players) - 1 < self.minplayers and self.inprogress:
+                self.stop()
                 message += " Not enough players to continue, stopping game."
             else:
                 if self.inprogress:
@@ -343,8 +400,8 @@ class Game():
                                     if newplayer == self.czar:
                                         czarid = i
                                     i += 1
-                                czarid +=1
-                                if czarid > len(self.players) -1:
+                                czarid += 1
+                                if czarid > len(self.players) - 1:
                                     czarid = 0
                                 self.czar = self.players[czarid]
                             self.players.remove(player)
@@ -356,4 +413,3 @@ class Game():
         else:
             message = None
         return message
-
