@@ -8,8 +8,9 @@ from datetime import timedelta
 import select
 import functions
 
-class IRCConnector( threading.Thread):
-    def __init__ (self, host, port):
+
+class IRCConnector(threading.Thread):
+    def __init__(self, host, port):
         self.host = host
         self.port = port
         self.channel = "#cah"
@@ -20,17 +21,18 @@ class IRCConnector( threading.Thread):
         self.allmessages = []
         self.lastmessage = datetime.now()
         self.pulsetime = 500
-        threading.Thread.__init__ ( self )
+        threading.Thread.__init__(self)
 
     def output(self, message):
-        print("Server: %s\nMessage:%s\n" %(self.host, message))
+        print("Server: %s\nMessage:%s\n" % (self.host, message))
 
     def say(self, message):
         #print "sending %s" % message
-        messagetosend = "PRIVMSG %s :%s\n" %(message["channel"], message["message"])
+        messagetosend = "PRIVMSG %s :%s\n" % (
+            message["channel"], message["message"])
         self.s.send(messagetosend)
 
-    def run (self):
+    def run(self):
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except:
@@ -43,15 +45,15 @@ class IRCConnector( threading.Thread):
         #self.s.connect((remote_ip, self.port))
         self.s.connect((self.host, self.port))
         self.s.setblocking(0)
-        message1 = "NICK %s\r\n" %self.botname
-        message2 = 'USER %s %s %s :%s\r\n' %(self.identity, self.hostname, self.host, self.realname)
+        message1 = "NICK %s\r\n" % self.botname
+        message2 = 'USER %s %s %s :%s\r\n' % (
+            self.identity, self.hostname, self.host, self.realname)
         self.s.send(message1)
         self.s.send(message2)
 
         g = functions.Game(self)
 
-
-        while 1:
+        while True:
             line = None
             message = None
 
@@ -66,13 +68,13 @@ class IRCConnector( threading.Thread):
                 line.strip()
                 splitline = line.split(" :")
 
-                if  "PING" in splitline[0]:
-                    pong = "PONG %s" %splitline[1]
+                if "PING" in splitline[0]:
+                    pong = "PONG %s" % splitline[1]
                     self.output(pong)
                     self.s.send(pong)
 
                 if re.search(":End of /MOTD command.", line):
-                        joinchannel = "JOIN %s\n" %self.channel
+                        joinchannel = "JOIN %s\n" % self.channel
                         self.output(joinchannel)
                         self.s.send("PRIVMSG nickserv :identify hum4n1ty\n")
                         self.s.send(joinchannel)
@@ -88,14 +90,17 @@ class IRCConnector( threading.Thread):
                         if player.username == oldnick:
                             player.username = newnick
 
-                if re.search("^:.* QUIT .*$", line) or re.search("^:.* PART .*$", line):
+                if re.search("^:.* QUIT .*$", line) \
+                        or re.search("^:.* PART .*$", line):
                     split1 = line.split()
                     split2 = split1[0].split("!")
                     username = split2[0][1:]
                     print username
                     message = g.part(username)
                     if message:
-                        self.allmessages.append({"message": message, "channel": self.channel})
+                        self.allmessages.append({
+                            "message": message,
+                            "channel": self.channel})
 
                 if re.search("PRIVMSG", line):
                     details = line.split()
@@ -112,26 +117,35 @@ class IRCConnector( threading.Thread):
                     if lower == "$kill" and username == "sprmtt":
                         self.s.send("QUIT :Bot quit\n")
                     elif lower == "$test":
-                        self.allmessages.append({"message": "test message", "channel": channel})
+                        self.allmessages.append({
+                            "message": "test message",
+                            "channel": channel})
                     elif lower == "$reload":
                         try:
                             reload(functions)
-                            self.allmessages.append({"message": "Reloaded functions", "channel": channel})
+                            self.allmessages.append({
+                                "message": "Reloaded functions",
+                                "channel": channel})
                         except:
-                            self.allmessages.append({"message": "Unable to reload due to errors", "channel": channel})
+                            self.allmessages.append({
+                                "message": "Unable to reload due to errors",
+                                "channel": channel})
                     else:
-                        self.allmessages += functions.actioner(g, message, username, channel, self.channel)
+                        self.allmessages += functions.actioner(
+                            g, message, username, channel, self.channel)
 
                 if re.search(":Closing Link:", line):
                     sys.exit()
 
             if g.inprogress or g.starttime:
-                self.allmessages += functions.gameLogic(g, message, username, channel, self.channel)
+                self.allmessages += functions.gameLogic(
+                    g, message, username, channel, self.channel)
             line = None
             message = None
             timestamp = datetime.now()
             if len(self.allmessages) > 0:
-                newtime = self.lastmessage + timedelta(milliseconds = self.pulsetime)
+                newtime = self.lastmessage \
+                    + timedelta(milliseconds=self.pulsetime)
                 if timestamp > newtime:
                     #print self.allmessages
                     currmess = self.allmessages.pop(0)
@@ -141,10 +155,10 @@ class IRCConnector( threading.Thread):
 
 
 irc_connections = [{
-                        "host": "irc.darkmyst.org",
-                        "port": 6667,
-                        "channels": ["#cah"]
-                    }]
+    "host": "irc.darkmyst.org",
+    "port": 6667,
+    "channels": ["#cah"]
+}]
 
 for irc in irc_connections:
     IRCThread = IRCConnector(irc['host'], irc['port'])
