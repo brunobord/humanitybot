@@ -20,3 +20,4 @@ Simply copy the content of the ``irc-sample.json`` file provided and save it as 
 * realname
 * hostname
 * botname
+* password

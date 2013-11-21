@@ -19,6 +19,7 @@ class IRCConnector( threading.Thread):
         self.realname = config.get("realname", "superbot")
         self.hostname = config.get("hostname", "supermatt.net")
         self.botname = config.get('botname', "humanitybot")
+        self.password = config.get('password', 'hum4n1ty')
         self.allmessages = []
         self.lastmessage = datetime.now()
         self.pulsetime = 500
@@ -76,7 +77,7 @@ class IRCConnector( threading.Thread):
                 if re.search(":End of ", line):
                         joinchannel = "JOIN %s\n" %self.channel
                         self.output(joinchannel)
-                        self.s.send("PRIVMSG nickserv :identify hum4n1ty\n")
+                        self.s.send("PRIVMSG nickserv :identify %s\n" % self.password)
                         self.s.send(joinchannel)
                         self.inchannel = True
 
