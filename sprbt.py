@@ -7,16 +7,18 @@ from datetime import datetime
 from datetime import timedelta
 import select
 import functions
+import json
+
 
 class IRCConnector( threading.Thread):
-    def __init__ (self, host, port):
-        self.host = host
-        self.port = port
-        self.channel = "#cah"
-        self.identity = "superbot"
-        self.realname = "superbot"
-        self.hostname = "supermatt.net"
-        self.botname = "humanitybot"
+    def __init__ (self, config):
+        self.host = config.get('host')
+        self.port = config.get('port')
+        self.channel = config.get('channel', "#cah")
+        self.identity = config.get("identity", "superbot")
+        self.realname = config.get("realname", "superbot")
+        self.hostname = config.get("hostname", "supermatt.net")
+        self.botname = config.get('botname', "humanitybot")
         self.allmessages = []
         self.lastmessage = datetime.now()
         self.pulsetime = 500
@@ -71,7 +73,7 @@ class IRCConnector( threading.Thread):
                     self.output(pong)
                     self.s.send(pong)
 
-                if re.search(":End of /MOTD command.", line):
+                if re.search(":End of ", line):
                         joinchannel = "JOIN %s\n" %self.channel
                         self.output(joinchannel)
                         self.s.send("PRIVMSG nickserv :identify hum4n1ty\n")
@@ -140,12 +142,8 @@ class IRCConnector( threading.Thread):
             #print self.allmessages
 
 
-irc_connections = [{
-                        "host": "irc.darkmyst.org",
-                        "port": 6667,
-                        "channels": ["#cah"]
-                    }]
+irc_connections = json.load(open('irc.json'))
 
-for irc in irc_connections:
-    IRCThread = IRCConnector(irc['host'], irc['port'])
+for config in irc_connections:
+    IRCThread = IRCConnector(config)
     IRCThread.start()
