@@ -143,8 +143,9 @@ class IRCConnector( threading.Thread):
             #print self.allmessages
 
 
-irc_connections = json.load(open('irc.json'))
+if __name__ == '__main__':
+    irc_connections = json.load(open('irc.json'))
 
-for config in irc_connections:
-    IRCThread = IRCConnector(config)
-    IRCThread.start()
+    for config in irc_connections:
+        IRCThread = IRCConnector(config)
+        IRCThread.start()
