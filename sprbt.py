@@ -7,17 +7,19 @@ from datetime import datetime
 from datetime import timedelta
 import select
 import functions
+import json
 
 
 class IRCConnector(threading.Thread):
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-        self.channel = "#cah"
-        self.identity = "superbot"
-        self.realname = "superbot"
-        self.hostname = "supermatt.net"
-        self.botname = "humanitybot"
+    def __init__(self, config):
+        self.host = config.get('host')
+        self.port = config.get('port')
+        self.channel = config.get('channel', "#cah")
+        self.identity = config.get("identity", "superbot")
+        self.realname = config.get("realname", "superbot")
+        self.hostname = config.get("hostname", "supermatt.net")
+        self.botname = config.get('botname', "humanitybot")
+        self.password = config.get('password', 'hum4n1ty')
         self.allmessages = []
         self.lastmessage = datetime.now()
         self.pulsetime = 500
@@ -76,7 +78,8 @@ class IRCConnector(threading.Thread):
                 if re.search(":End of /MOTD command.", line):
                         joinchannel = "JOIN %s\n" % self.channel
                         self.output(joinchannel)
-                        self.s.send("PRIVMSG nickserv :identify hum4n1ty\n")
+                        self.s.send("PRIVMSG nickserv :identify %s\n"
+                                    % self.password)
                         self.s.send(joinchannel)
                         self.inchannel = True
 
@@ -154,12 +157,8 @@ class IRCConnector(threading.Thread):
             #print self.allmessages
 
 
-irc_connections = [{
-    "host": "irc.darkmyst.org",
-    "port": 6667,
-    "channels": ["#cah"]
-}]
-
-for irc in irc_connections:
-    IRCThread = IRCConnector(irc['host'], irc['port'])
-    IRCThread.start()
+if __name__ == '__main__':
+    irc_connections = json.load(open('irc.json'))
+    for config in irc_connections:
+        IRCThread = IRCConnector(config)
+        IRCThread.start()
